@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+// lucide-react may expose either `lucideReact` or `LucideReact` on the window
+// depending on the version. Fall back to the plain `lucide` icon set if needed.
+const iconSource = window.lucideReact || window.LucideReact || window.lucide || {};
+} = iconSource;
 import {
   LineChart,
   Line,
