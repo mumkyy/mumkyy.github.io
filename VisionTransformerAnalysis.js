@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
+// When used directly in the browser via a script tag the imports are provided
+// by UMD bundles from the corresponding CDNs. These destructured variables are
+// pulled from the global objects exposed by those bundles. This allows the
+// component to run without a build step, which is useful for GitHub Pages.
+const { useState, useEffect, useMemo } = React;
+const {
   LineChart,
   Line,
   XAxis,
@@ -11,8 +15,8 @@ import {
   PieChart,
   Pie,
   Cell
-} from 'recharts';
-import {
+} = Recharts;
+const {
   Calculator,
   Settings,
   Info,
@@ -22,7 +26,7 @@ import {
   Eye,
   Grid,
   Layers
-} from 'lucide-react';
+} = lucideReact;
 
 const VisionTransformerAnalysis = () => {
   const [selectedParam, setSelectedParam] = useState('embedding_dim');
@@ -827,5 +831,7 @@ const VisionTransformerAnalysis = () => {
   );
 };
 
-export default VisionTransformerAnalysis;
+// Expose the component globally so it can be rendered without an import
+// statement in index.html.
+window.VisionTransformerAnalysis = VisionTransformerAnalysis;
 
