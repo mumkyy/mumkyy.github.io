@@ -1,9 +1,5 @@
-// When used directly in the browser via a script tag the imports are provided
-// by UMD bundles from the corresponding CDNs. These destructured variables are
-// pulled from the global objects exposed by those bundles. This allows the
-// component to run without a build step, which is useful for GitHub Pages.
-const { useState, useEffect, useMemo } = React;
-const {
+import React, { useState, useEffect, useMemo } from 'react';
+import {
   LineChart,
   Line,
   XAxis,
@@ -15,8 +11,8 @@ const {
   PieChart,
   Pie,
   Cell
-} = Recharts;
-const {
+} from 'recharts';
+import {
   Calculator,
   Settings,
   Info,
@@ -26,7 +22,7 @@ const {
   Eye,
   Grid,
   Layers
-} = lucideReact;
+} from 'lucide-react';
 
 const VisionTransformerAnalysis = () => {
   const [selectedParam, setSelectedParam] = useState('embedding_dim');
@@ -68,18 +64,17 @@ const VisionTransformerAnalysis = () => {
     }));
   }, [baseParams.image_size, baseParams.patch_size]);
 
-  const detailedCalc = useMemo(
-    () => calculateAccessesDetailed(baseParams),
-    [baseParams]
-  );
+  const detailedCalc = useMemo(() => calculateAccessesDetailed(baseParams), [baseParams]);
   const opticalMetrics = useMemo(
     () => calculateOpticalMetrics(detailedCalc.totalAccesses),
     [detailedCalc.totalAccesses, opticalCore]
   );
-  const data = useMemo(
-    () => generateData(selectedParam),
-    [selectedParam, baseParams, paramRanges, opticalCore]
-  );
+  const data = useMemo(() => generateData(selectedParam), [
+    selectedParam,
+    baseParams,
+    paramRanges,
+    opticalCore
+  ]);
 
   function calculateAccessesDetailed(params) {
     const { embedding_dim: d_model, num_heads: h, sequence_length: L } = params;
@@ -202,9 +197,9 @@ const VisionTransformerAnalysis = () => {
 
       res.push({
         [paramName]: value,
-        'Total Accesses': detailed.totalAccesses / 1000000,
-        'Projection Accesses': detailed.projectionAccesses / 1000000,
-        'Attention Accesses': detailed.attentionAccesses / 1000000,
+        'Total Accesses': detailed.totalAccesses / 1e6,
+        'Projection Accesses': detailed.projectionAccesses / 1e6,
+        'Attention Accesses': detailed.attentionAccesses / 1e6,
         'Energy (μJ)': metrics.energyConsumption / 1000,
         'Execution Time (ms)': metrics.executionTime,
         'Utilization (%)': Math.min(metrics.throughputUtilization, 100)
@@ -257,7 +252,7 @@ const VisionTransformerAnalysis = () => {
   };
 
   const OpticalCoreVisualization = () => {
-    const { wavelength_channels, microrings_per_channel, parallel_ops } = opticalCore;
+    const { wavelength_channels, microrings_per_channel } = opticalCore;
     const totalElements = wavelength_channels * microrings_per_channel;
 
     return (
@@ -271,8 +266,7 @@ const VisionTransformerAnalysis = () => {
               <div
                 key={i}
                 className={`w-3 h-3 rounded-sm ${
-                  i <
-                  (detailedCalc.totalAccesses / opticalMetrics.maxParallelOps) * 64
+                  i < (detailedCalc.totalAccesses / opticalMetrics.maxParallelOps) * 64
                     ? 'bg-blue-500'
                     : 'bg-gray-300'
                 }`}
@@ -285,8 +279,7 @@ const VisionTransformerAnalysis = () => {
             <div>Microrings per Channel: {microrings_per_channel}</div>
             <div>Total Capacity: {totalElements.toLocaleString()} parallel ops</div>
             <div>
-              Current Utilization:{' '}
-              {(opticalMetrics.utilizationRatio * 100).toFixed(1)}%
+              Current Utilization: {(opticalMetrics.utilizationRatio * 100).toFixed(1)}%
             </div>
           </div>
         </div>
@@ -376,7 +369,7 @@ const VisionTransformerAnalysis = () => {
     );
   };
 
-  const pieData = detailedCalc.steps.slice(1).map(step => ({
+  const pieData = detailedCalc.steps.slice(1).map((step) => ({
     name: step.name,
     value: step.accesses,
     color: step.color
@@ -405,13 +398,8 @@ const VisionTransformerAnalysis = () => {
                 <input
                   type="number"
                   value={baseParams.embedding_dim}
-                  onChange={e =>
-                    updateNumber(
-                      setBaseParams,
-                      'embedding_dim',
-                      e.target.value,
-                      64
-                    )
+                  onChange={(e) =>
+                    updateNumber(setBaseParams, 'embedding_dim', e.target.value, 64)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   min="64"
@@ -425,7 +413,7 @@ const VisionTransformerAnalysis = () => {
                 <input
                   type="number"
                   value={baseParams.num_heads}
-                  onChange={e =>
+                  onChange={(e) =>
                     updateNumber(setBaseParams, 'num_heads', e.target.value, 1)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
@@ -433,13 +421,11 @@ const VisionTransformerAnalysis = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Image Size
-                </label>
+                <label className="block text-sm font-medium mb-1">Image Size</label>
                 <input
                   type="number"
                   value={baseParams.image_size}
-                  onChange={e =>
+                  onChange={(e) =>
                     updateNumber(setBaseParams, 'image_size', e.target.value, 32)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
@@ -448,13 +434,11 @@ const VisionTransformerAnalysis = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Patch Size
-                </label>
+                <label className="block text-sm font-medium mb-1">Patch Size</label>
                 <input
                   type="number"
                   value={baseParams.patch_size}
-                  onChange={e =>
+                  onChange={(e) =>
                     updateNumber(setBaseParams, 'patch_size', e.target.value, 4)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
@@ -462,8 +446,7 @@ const VisionTransformerAnalysis = () => {
                 />
               </div>
               <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                Sequence Length:{' '}
-                <span className="font-mono">{baseParams.sequence_length}</span>
+                Sequence Length: <span className="font-mono">{baseParams.sequence_length}</span>
               </div>
             </div>
           </div>
@@ -480,13 +463,8 @@ const VisionTransformerAnalysis = () => {
                 <input
                   type="number"
                   value={opticalCore.wavelength_channels}
-                  onChange={e =>
-                    updateNumber(
-                      setOpticalCore,
-                      'wavelength_channels',
-                      e.target.value,
-                      1
-                    )
+                  onChange={(e) =>
+                    updateNumber(setOpticalCore, 'wavelength_channels', e.target.value, 1)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   min="1"
@@ -494,18 +472,13 @@ const VisionTransformerAnalysis = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Microrings/Channel
+                  Microrings per Channel
                 </label>
                 <input
                   type="number"
                   value={opticalCore.microrings_per_channel}
-                  onChange={e =>
-                    updateNumber(
-                      setOpticalCore,
-                      'microrings_per_channel',
-                      e.target.value,
-                      1
-                    )
+                  onChange={(e) =>
+                    updateNumber(setOpticalCore, 'microrings_per_channel', e.target.value, 1)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   min="1"
@@ -516,7 +489,7 @@ const VisionTransformerAnalysis = () => {
                 <input
                   type="number"
                   value={opticalCore.parallel_ops}
-                  onChange={e =>
+                  onChange={(e) =>
                     updateNumber(setOpticalCore, 'parallel_ops', e.target.value, 1)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
@@ -530,13 +503,8 @@ const VisionTransformerAnalysis = () => {
                 <input
                   type="number"
                   value={opticalCore.throughput_gops}
-                  onChange={e =>
-                    updateNumber(
-                      setOpticalCore,
-                      'throughput_gops',
-                      e.target.value,
-                      1
-                    )
+                  onChange={(e) =>
+                    updateNumber(setOpticalCore, 'throughput_gops', e.target.value, 1)
                   }
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   min="1"
@@ -553,7 +521,7 @@ const VisionTransformerAnalysis = () => {
               <div className="flex justify-between">
                 <span>Total Accesses:</span>
                 <span className="font-mono text-blue-600">
-                  {(detailedCalc.totalAccesses / 1000000).toFixed(2)}M
+                  {(detailedCalc.totalAccesses / 1e6).toFixed(2)}M
                 </span>
               </div>
               <div className="flex justify-between">
@@ -610,10 +578,7 @@ const VisionTransformerAnalysis = () => {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={value => [
-                    (value / 1000000).toFixed(2) + 'M',
-                    'Accesses'
-                  ]}
+                  formatter={(value) => [(value / 1e6).toFixed(2) + 'M', 'Accesses']}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -653,7 +618,7 @@ const VisionTransformerAnalysis = () => {
                     type="number"
                     placeholder="Min"
                     value={range.min}
-                    onChange={e =>
+                    onChange={(e) =>
                       updateRangeNumber(param, 'min', e.target.value, 1)
                     }
                     className="p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500"
@@ -662,7 +627,7 @@ const VisionTransformerAnalysis = () => {
                     type="number"
                     placeholder="Max"
                     value={range.max}
-                    onChange={e =>
+                    onChange={(e) =>
                       updateRangeNumber(param, 'max', e.target.value, range.min)
                     }
                     className="p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500"
@@ -671,7 +636,7 @@ const VisionTransformerAnalysis = () => {
                     type="number"
                     placeholder="Step"
                     value={range.step}
-                    onChange={e =>
+                    onChange={(e) =>
                       updateRangeNumber(param, 'step', e.target.value, 1)
                     }
                     className="p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500"
@@ -690,7 +655,7 @@ const VisionTransformerAnalysis = () => {
               { key: 'sequence_length', label: 'Sequence Length', icon: Grid },
               { key: 'num_heads', label: 'Number of Heads', icon: Eye },
               { key: 'image_size', label: 'Image Size', icon: Grid }
-            ].map(param => {
+            ].map((param) => {
               const Icon = param.icon;
               return (
                 <button
@@ -831,7 +796,4 @@ const VisionTransformerAnalysis = () => {
   );
 };
 
-// Expose the component globally so it can be rendered without an import
-// statement in index.html.
-window.VisionTransformerAnalysis = VisionTransformerAnalysis;
-
+export default VisionTransformerAnalysis;
