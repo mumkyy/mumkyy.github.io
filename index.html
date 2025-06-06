@@ -1,27 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision Transformer Optical Core Analysis</title>
-    <!-- Tailwind for basic styling -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- React and supporting libraries -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
-    <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body class="bg-gray-50">
-    <div id="root"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optical Core ViT Analyzer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    label { display:block; margin-top:10px; }
+    input { margin-left:5px; }
+    #results { margin-top:20px; }
+    .calc { margin-top:20px; }
+  </style>
+</head>
+<body>
+<h1>Optical Core ViT Analyzer</h1>
+<p>Explore how Vision Transformer (ViT) parameters map onto a photonic optical core.</p>
+<div>
+  <label>Image size (pixels): <input type="number" id="imageSize" value="224"></label>
+  <label>Patch size (pixels): <input type="number" id="patchSize" value="16"></label>
+  <label>Embedding dimension (d<sub>m</sub>): <input type="number" id="embedDim" value="92"></label>
+  <label>Attention dimension (d<sub>k</sub>): <input type="number" id="attnDim" value="64"></label>
+  <label>Number of heads: <input type="number" id="heads" value="3"></label>
+  <label>Wavelength channels per core: <input type="number" id="wavelengths" value="32"></label>
+  <label>Arms per core: <input type="number" id="arms" value="64"></label>
+  <button id="compute">Compute</button>
+</div>
+<div id="results" class="calc"></div>
+<script>
+function cyclesPatchEmbedding(numTokens, dm, wavelengths) {
+  const chunks = Math.ceil(dm / wavelengths);
+  return numTokens * 3 * chunks; // Q, K, V
+}
 
-    <!-- Our component source compiled in the browser -->
-    <script type="text/babel" data-presets="env,react" src="VisionTransformerAnalysis.js"></script>
-    <script type="text/babel">
-      ReactDOM.createRoot(document.getElementById('root')).render(
-        <VisionTransformerAnalysis />
-      );
-    </script>
-  </body>
+function cyclesAttention(numTokens, dk, wavelengths, heads) {
+  const chunks = Math.ceil(dk / wavelengths);
+  return heads * numTokens * numTokens * chunks;
+}
+
+function compute() {
+  const img = parseInt(document.getElementById('imageSize').value);
+  const patch = parseInt(document.getElementById('patchSize').value);
+  const dm = parseInt(document.getElementById('embedDim').value);
+  const dk = parseInt(document.getElementById('attnDim').value);
+  const heads = parseInt(document.getElementById('heads').value);
+  const wavelengths = parseInt(document.getElementById('wavelengths').value);
+  const arms = parseInt(document.getElementById('arms').value);
+
+  const patchesPerSide = img / patch;
+  const numPatches = patchesPerSide * patchesPerSide;
+  const tokens = numPatches + 1; // CLS token
+
+  const qkvCycles = cyclesPatchEmbedding(tokens, dm, wavelengths);
+  const attCycles = cyclesAttention(tokens, dk, wavelengths, heads);
+  const weightedCycles = cyclesAttention(tokens, dk, wavelengths, heads);
+  const total = qkvCycles + attCycles + weightedCycles;
+
+  document.getElementById('results').innerHTML = `
+    <strong>Tokens:</strong> ${tokens}<br>
+    <strong>Patch embedding cycles:</strong> ${qkvCycles}<br>
+    <strong>Attention cycles:</strong> ${attCycles}<br>
+    <strong>Weighted-sum cycles:</strong> ${weightedCycles}<br>
+    <strong>Total cycles:</strong> ${total}<br>
+  `;
+}
+
+document.getElementById('compute').addEventListener('click', compute);
+</script>
+</body>
 </html>
