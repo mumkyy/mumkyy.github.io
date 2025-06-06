@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Optical Core ViT Analyzer</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
+    body { font-family: Arial, sans-serif; margin: 40px; max-width: 800px; }
     label { display:block; margin-top:10px; }
     input { margin-left:5px; }
     #results { margin-top:20px; }
-    .calc { margin-top:20px; }
+    canvas { margin-top:20px; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <h1>Optical Core ViT Analyzer</h1>
-<p>Explore how Vision Transformer (ViT) parameters map onto a photonic optical core.</p>
+<p>Adjust parameters to estimate optical core cycles for a Vision Transformer.</p>
 <div>
   <label>Image size (pixels): <input type="number" id="imageSize" value="224"></label>
   <label>Patch size (pixels): <input type="number" id="patchSize" value="16"></label>
@@ -25,18 +26,32 @@
   <label>Arms per core: <input type="number" id="arms" value="64"></label>
   <button id="compute">Compute</button>
 </div>
-<div id="results" class="calc"></div>
+<div id="results"></div>
+<canvas id="cycleChart" width="600" height="300"></canvas>
+
+<details style="margin-top:20px;">
+<summary><strong>Math Explanation</strong></summary>
+<p>The optical core processes <code>wavelengths</code> inputs at once. Vectors longer than
+that are split into <code>ceil(length / wavelengths)</code> chunks.</p>
+<ul>
+<li><strong>Patch embedding:</strong> each token is projected to Q, K and V.
+The cost is <code>tokens × 3 × ceil(d_m / wavelengths)</code>.</li>
+<li><strong>Attention scores:</strong> each head computes a dot product for every
+pair of tokens using dimension <code>d_k</code>. The cost is
+<code>heads × tokens² × ceil(d_k / wavelengths)</code>.</li>
+<li><strong>Weighted sums:</strong> identical cost as attention scores because the same
+<code>d_k</code> dimension is used.</li>
+</ul>
+</details>
+
 <script>
-function cyclesPatchEmbedding(numTokens, dm, wavelengths) {
-  const chunks = Math.ceil(dm / wavelengths);
-  return numTokens * 3 * chunks; // Q, K, V
+function cyclesPatchEmbedding(tokens, dm, wavelengths) {
+  return tokens * 3 * Math.ceil(dm / wavelengths);
 }
-
-function cyclesAttention(numTokens, dk, wavelengths, heads) {
-  const chunks = Math.ceil(dk / wavelengths);
-  return heads * numTokens * numTokens * chunks;
+function cyclesAttention(tokens, dk, wavelengths, heads) {
+  return heads * tokens * tokens * Math.ceil(dk / wavelengths);
 }
-
+let chart;
 function compute() {
   const img = parseInt(document.getElementById('imageSize').value);
   const patch = parseInt(document.getElementById('patchSize').value);
@@ -44,24 +59,36 @@ function compute() {
   const dk = parseInt(document.getElementById('attnDim').value);
   const heads = parseInt(document.getElementById('heads').value);
   const wavelengths = parseInt(document.getElementById('wavelengths').value);
-  const arms = parseInt(document.getElementById('arms').value);
 
   const patchesPerSide = img / patch;
   const numPatches = patchesPerSide * patchesPerSide;
-  const tokens = numPatches + 1; // CLS token
+  const tokens = numPatches + 1;
 
-  const qkvCycles = cyclesPatchEmbedding(tokens, dm, wavelengths);
-  const attCycles = cyclesAttention(tokens, dk, wavelengths, heads);
-  const weightedCycles = cyclesAttention(tokens, dk, wavelengths, heads);
-  const total = qkvCycles + attCycles + weightedCycles;
+  const qkv = cyclesPatchEmbedding(tokens, dm, wavelengths);
+  const att = cyclesAttention(tokens, dk, wavelengths, heads);
+  const weighted = cyclesAttention(tokens, dk, wavelengths, heads);
+  const total = qkv + att + weighted;
 
-  document.getElementById('results').innerHTML = `
-    <strong>Tokens:</strong> ${tokens}<br>
-    <strong>Patch embedding cycles:</strong> ${qkvCycles}<br>
-    <strong>Attention cycles:</strong> ${attCycles}<br>
-    <strong>Weighted-sum cycles:</strong> ${weightedCycles}<br>
-    <strong>Total cycles:</strong> ${total}<br>
-  `;
+  document.getElementById('results').innerHTML =
+    `Tokens: <strong>${tokens}</strong><br>` +
+    `Patch embedding cycles: <strong>${qkv}</strong><br>` +
+    `Attention cycles: <strong>${att}</strong><br>` +
+    `Weighted-sum cycles: <strong>${weighted}</strong><br>` +
+    `Total cycles: <strong>${total}</strong>`;
+
+  const data = [qkv, att, weighted];
+  const labels = ['Patch Embed', 'Attention', 'Weighted Sum'];
+  if (!chart) {
+    const ctx = document.getElementById('cycleChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label: 'Cycles', data, backgroundColor: '#4e79a7' }] },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+  } else {
+    chart.data.datasets[0].data = data;
+    chart.update();
+  }
 }
 
 document.getElementById('compute').addEventListener('click', compute);
