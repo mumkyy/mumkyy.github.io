@@ -64,17 +64,20 @@ const VisionTransformerAnalysis = () => {
     }));
   }, [baseParams.image_size, baseParams.patch_size]);
 
-  const detailedCalc = useMemo(() => calculateAccessesDetailed(baseParams), [baseParams]);
+  const detailedCalc = useMemo(
+    () => calculateAccessesDetailed(baseParams),
+    [baseParams]
+  );
+
   const opticalMetrics = useMemo(
     () => calculateOpticalMetrics(detailedCalc.totalAccesses),
     [detailedCalc.totalAccesses, opticalCore]
   );
-  const data = useMemo(() => generateData(selectedParam), [
-    selectedParam,
-    baseParams,
-    paramRanges,
-    opticalCore
-  ]);
+
+  const data = useMemo(
+    () => generateData(selectedParam),
+    [selectedParam, baseParams, paramRanges, opticalCore]
+  );
 
   function calculateAccessesDetailed(params) {
     const { embedding_dim: d_model, num_heads: h, sequence_length: L } = params;
@@ -471,9 +474,7 @@ const VisionTransformerAnalysis = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Microrings per Channel
-                </label>
+                <label className="block text-sm font-medium mb-1">Microrings per Channel</label>
                 <input
                   type="number"
                   value={opticalCore.microrings_per_channel}
