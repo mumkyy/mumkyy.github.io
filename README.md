@@ -1,17 +1,7 @@
-# Vision Transformer Analysis Demo
+# Optical Core ViT Analyzer
 
-This repository contains a single page demo that visualizes various metrics for a
-Vision Transformer running on an optical core. The page is self contained and
-uses CDN scripts so it can be hosted directly on GitHub Pages without any build
-step.
+This repository contains a lightweight, GitHub Pages compatible tool for exploring how Vision Transformer (ViT) parameters map onto a photonic optical core.
 
-## Running locally
+Open `index.html` in a browser (or via GitHub Pages) to adjust parameters such as image size, patch size, embedding dimension, attention dimension, number of heads, and core properties. The page will display approximate optical core cycle counts for patch embedding, attention, and weighted-sum phases.
 
-Open `index.html` in your browser. No additional setup is required.
-
-## Deploying to GitHub Pages
-
-1. Commit all changes to the main branch.
-2. In the repository settings, enable GitHub Pages and select the `main` branch
-   as the source.
-3. Visit the provided GitHub Pages URL to view the interactive demo.
+The calculations follow the logic outlined in the accompanying problem description. They assume that each optical core processes inputs in groups equal to the available wavelength channels.
